@@ -1,0 +1,94 @@
+#!/bin/bash
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++    Tunnel Script | StrelixCloud | Made by Lostdude :)      +
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+DB_FILE="/tmp/port_tunnels.db"
+SERVER="176.100.37.120"
+USER="tunnel"
+
+mkdir -p /tmp
+touch "$DB_FILE"
+
+add_tunnel() {
+  LOCAL_PORT=$1
+  TMPFILE=$(mktemp)
+  ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -N -R 0:localhost:$LOCAL_PORT $USER@$SERVER >"$TMPFILE" 2>&1 &
+  SSH_PID=$!
+
+  for i in {1..10}; do
+    if grep -q "Allocated port" "$TMPFILE"; then
+      break
+    fi
+    sleep 0.5
+  done
+
+  if grep -q "Allocated port" "$TMPFILE"; then
+    REMOTE_PORT=$(grep "Allocated port" "$TMPFILE" | grep -oP '\d{4,5}' | head -n1)
+    echo "$LOCAL_PORT:$REMOTE_PORT:$SSH_PID" >> "$DB_FILE"
+    echo "✅ Successfully forwarded $LOCAL_PORT to $SERVER:$REMOTE_PORT"
+  else
+    echo "❌ Tunnel forwarding failed."
+    grep -v "^Warning:" "$TMPFILE"
+    kill "$SSH_PID" 2>/dev/null
+  fi
+  rm "$TMPFILE"
+}
+
+stop_tunnel() {
+  PORT=$1
+  TMP=$(mktemp)
+  while IFS=: read -r LPORT RPORT PID; do
+    if [[ "$LPORT" == "$PORT" ]]; then
+      kill "$PID" 2>/dev/null
+      echo "🛑 Sucessfully stopped tunnel for $LPORT"
+    else
+      echo "$LPORT:$RPORT:$PID" >> "$TMP"
+    fi
+  done < "$DB_FILE"
+  mv "$TMP" "$DB_FILE"
+}
+
+stop_all() {
+  while IFS=: read -r LPORT RPORT PID; do
+    kill "$PID" 2>/dev/null
+    echo "🛑 Sucessfully stopped tunnel for $LPORT"
+  done < "$DB_FILE"
+  > "$DB_FILE"
+}
+
+list_tunnels() {
+  if [[ ! -s "$DB_FILE" ]]; then
+    echo "❌ No active tunnels found."
+    return
+  fi
+  echo "📃 Active tunnels:"
+  while IFS=: read -r LPORT RPORT PID; do
+    if ps -p "$PID" > /dev/null 2>&1; then
+      echo " - $SERVER:$RPORT ➜ localhost:$LPORT (pid $PID)"
+    fi
+  done < "$DB_FILE"
+}
+
+reset() {
+  echo "⚠️ Note: Resetting all tunnels will remove any forwarded tunnels, Continue (y/n)."
+  read -r CONFIRM
+  if [[ "$CONFIRM" =~ ^[Yy]$ ]]; then
+    > "$DB_FILE"
+    pkill -9 ssh 2>/dev/null
+    echo "✅ Successfully cleared all tunnels."
+  else
+    echo "❌ Reset was canceled by the user."
+  fi
+}
+
+print_help() {
+  echo "🧭 Port Forwarder by StrelixCloud Team."
+  echo "======================================================="
+  echo "  tunnel add <port>     Create a Tunnel for Local Port"
+  echo "  tunnel stop <port>    Stop a Local Port Tunnel"
+  echo "  tunnel stop all       Kill all Local Port Tunnels"
+  echo "  tunnel list tunnels   List All Active Tunnels"
+  echo "  tunnel reset          Reset Tunnels & DB"
+  echo "======================================================="
+  echo "📃 Script By LostDude & Ports by StrelixCloud Team"
+}
