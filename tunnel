@@ -84,11 +84,11 @@ reset() {
 print_help() {
   echo "🧭 Port Forwarder by StrelixCloud Team."
   echo "======================================================="
-  echo "  tunnel add <port>     Create a Tunnel for Local Port"
-  echo "  tunnel stop <port>    Stop a Local Port Tunnel"
-  echo "  tunnel stop all       Kill all Local Port Tunnels"
-  echo "  tunnel list tunnels   List All Active Tunnels"
-  echo "  tunnel reset          Reset Tunnels & DB"
+  echo "  port add <port>     Create a Tunnel for Local Port"
+  echo "  port stop <port>    Stop a Local Port Tunnel"
+  echo "  port stop all       Kill all Local Port Tunnels"
+  echo "  port list tunnels   List All Active Tunnels"
+  echo "  port reset          Reset Tunnels & DB"
   echo "======================================================="
   echo "📃 Script By LostDude & Ports by StrelixCloud Team"
 }
