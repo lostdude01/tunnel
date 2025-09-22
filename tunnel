@@ -1,6 +1,6 @@
 #!/bin/bash
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-+    Tunnel Script | StrelixCloud | Made by Lostdude :)      +
++    Tunnel Script | StrelixCloud | Made by Lostdude         +
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 DB_FILE="/tmp/port_tunnels.db"
 SERVER="176.100.37.120"
